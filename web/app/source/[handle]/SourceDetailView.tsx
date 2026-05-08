@@ -5,12 +5,98 @@ import type {
   Cluster,
   FeatureKey,
   FeatureMeta,
+  RecentPost,
   SourceDetail,
 } from "@/lib/atlas-types";
 import { RADAR_FEATURES } from "@/lib/atlas-types";
 import { compactNumber, relativeTime } from "@/lib/formatting";
 import FeatureRadar from "@/components/FeatureRadar";
 import SourceCard from "@/components/SourceCard";
+
+function PostsSection({
+  title,
+  subtitle,
+  posts,
+}: {
+  title: string;
+  subtitle?: string;
+  posts: RecentPost[];
+}) {
+  return (
+    <section>
+      <h2 className="text-sm uppercase tracking-wide text-ink-muted mb-1">
+        {title}
+      </h2>
+      {subtitle && (
+        <p className="text-xs text-ink-subtle mb-3">{subtitle}</p>
+      )}
+      <ul className="space-y-3">
+        {posts.map((p) => {
+          const href = p.comments_permalink || p.url;
+          const Title = (
+            <span className="text-ink leading-snug">{p.title ?? "(untitled)"}</span>
+          );
+          return (
+            <li
+              key={p.id}
+              className="rounded-lg border border-line bg-bg-elevated p-3 hover:border-line-strong transition"
+            >
+              <div className="flex gap-3">
+                {p.image && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={p.image}
+                    alt=""
+                    className="w-20 h-14 rounded object-cover flex-shrink-0 border border-line"
+                    loading="lazy"
+                  />
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-3">
+                    {href ? (
+                      <a
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block hover:text-accent transition flex-1 min-w-0"
+                      >
+                        {Title}
+                      </a>
+                    ) : (
+                      <div className="flex-1 min-w-0">{Title}</div>
+                    )}
+                    <div className="flex-shrink-0 text-xs text-ink-subtle whitespace-nowrap">
+                      {relativeTime(p.created_at)}
+                    </div>
+                  </div>
+                  {p.summary && (
+                    <p className="mt-1.5 text-xs text-ink-muted line-clamp-2">
+                      {p.summary}
+                    </p>
+                  )}
+                  <div className="mt-2 flex items-center gap-3 text-xs text-ink-subtle">
+                    <span>↑ {compactNumber(p.num_upvotes)}</span>
+                    <span>💬 {compactNumber(p.num_comments)}</span>
+                    {p.comments_permalink && (
+                      <a
+                        href={p.comments_permalink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-ink-subtle hover:text-accent transition"
+                      >
+                        on daily.dev →
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
 
 export default function SourceDetailView({
   source,
@@ -126,76 +212,20 @@ export default function SourceDetailView({
         </div>
       </section>
 
+      {source.top_posts && source.top_posts.length > 0 && (
+        <PostsSection
+          title="Top posts"
+          subtitle="Highest engagement (upvotes + comments) ever, across this source's archive."
+          posts={source.top_posts}
+        />
+      )}
+
       {source.recent_posts && source.recent_posts.length > 0 && (
-        <section>
-          <h2 className="text-sm uppercase tracking-wide text-ink-muted mb-3">
-            Recent posts
-          </h2>
-          <ul className="space-y-3">
-            {source.recent_posts.map((p) => {
-              const href = p.comments_permalink || p.url;
-              const Title = (
-                <span className="text-ink leading-snug">{p.title ?? "(untitled)"}</span>
-              );
-              return (
-                <li
-                  key={p.id}
-                  className="rounded-lg border border-line bg-bg-elevated p-3 hover:border-line-strong transition"
-                >
-                  <div className="flex gap-3">
-                    {p.image && (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={p.image}
-                        alt=""
-                        className="w-20 h-14 rounded object-cover flex-shrink-0 border border-line"
-                        loading="lazy"
-                      />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-3">
-                        {href ? (
-                          <a
-                            href={href}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="block hover:text-accent transition flex-1 min-w-0"
-                          >
-                            {Title}
-                          </a>
-                        ) : (
-                          <div className="flex-1 min-w-0">{Title}</div>
-                        )}
-                        <div className="flex-shrink-0 text-xs text-ink-subtle whitespace-nowrap">
-                          {relativeTime(p.created_at)}
-                        </div>
-                      </div>
-                      {p.summary && (
-                        <p className="mt-1.5 text-xs text-ink-muted line-clamp-2">
-                          {p.summary}
-                        </p>
-                      )}
-                      <div className="mt-2 flex items-center gap-3 text-xs text-ink-subtle">
-                        <span>↑ {compactNumber(p.num_upvotes)}</span>
-                        <span>💬 {compactNumber(p.num_comments)}</span>
-                        {p.comments_permalink && (
-                          <a
-                            href={p.comments_permalink}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-ink-subtle hover:text-accent transition"
-                          >
-                            on daily.dev →
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
+        <PostsSection
+          title="Recent posts"
+          subtitle="Latest published. Very-fresh items (< 3 days) without engagement are skipped when older posts exist."
+          posts={source.recent_posts}
+        />
       )}
 
       <section>

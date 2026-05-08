@@ -156,6 +156,8 @@ export interface SourceDetail {
     outlier: string[];
   };
   recent_posts: RecentPost[];
+  /** Top posts by engagement (num_upvotes + 5*num_comments). May be empty. */
+  top_posts?: RecentPost[];
   similar_handles: string[];
   opposite_handles: string[];
   /** Pre-resolved summary data for the 5 nearest neighbors. */

@@ -277,33 +277,34 @@ def _compute_view_coords(
         xs = axis_values(x_axis)
         ys = axis_values(y_axis)
 
-        def scale(arr: np.ndarray) -> np.ndarray:
-            """Ordinal-rank scaling to [-10, 10].
+        def scale(arr: np.ndarray, axis_seed: int = 0) -> np.ndarray:
+            """Ordinal-rank scaling to [-10, 10] with per-axis tie-breaking.
 
-            Linear min-max scaling on skewed features crushes everyone to one
-            end. Average-rank scaling fixes the skew but still produces ties
-            on heavily-discrete features (median_upvotes integer values), which
-            shows up as vertical stripes on the map.
+            Average-rank produces visible ties as stripes; ordinal-rank with a
+            single global stable order produces a *diagonal artifact* when many
+            sources tie on BOTH axes (e.g. question_ratio=0 AND listicle_ratio=0
+            in the Title style view). Same input order on x and y → same rank
+            position on x and y → tied points fall on the y=x diagonal.
 
-            Ordinal ranks give each source a unique position, breaking ties
-            by stable secondary order. Sources with the same feature value
-            spread into a small band instead of stacking on a single x-stripe.
-            The overall ordering still tracks the feature monotonically.
+            Fix: add a tiny deterministic jitter that's different per axis so
+            ties are broken into different orderings on x vs y. The jitter is
+            < 1e-6 in magnitude so it never changes the rank of two distinct
+            feature values; it only spreads tied groups into a 2D blob.
             """
             n = arr.size
             if n == 0:
                 return arr.copy()
             if n == 1:
                 return np.zeros_like(arr)
-            # Stable sort: equal values keep their original (input) order, so
-            # ties are broken deterministically and reproducibly.
-            order = np.argsort(arr, kind="stable")
+            rng = np.random.RandomState(42 + axis_seed)
+            arr_jittered = arr + rng.uniform(-1e-9, 1e-9, n)
+            order = np.argsort(arr_jittered, kind="stable")
             ranks = np.empty(n, dtype=float)
             ranks[order] = np.arange(n, dtype=float)
             return ranks / (n - 1) * 20.0 - 10.0
 
-        xs_s = scale(xs)
-        ys_s = scale(ys)
+        xs_s = scale(xs, axis_seed=1)
+        ys_s = scale(ys, axis_seed=2)
 
         for i, sid in enumerate(df["source_id"].tolist()):
             sid_s = str(sid)
@@ -434,7 +435,7 @@ def _build_sources(
         x_out = None if not math.isfinite(x) else round(x, 4)
         y_out = None if not math.isfinite(y) else round(y, 4)
 
-        enrich_entry = enrich_data.get(sid, {"top_tags": [], "sample_titles": {"representative": [], "outlier": []}, "recent_posts": []})
+        enrich_entry = enrich_data.get(sid, {"top_tags": [], "sample_titles": {"representative": [], "outlier": []}, "recent_posts": [], "top_posts": []})
 
         def _opt_str(v):
             if v is None:
@@ -472,6 +473,7 @@ def _build_sources(
                 "top_tags": enrich_entry.get("top_tags", []),
                 "sample_titles": enrich_entry.get("sample_titles", {"representative": [], "outlier": []}),
                 "recent_posts": enrich_entry.get("recent_posts", []),
+                "top_posts": enrich_entry.get("top_posts", []),
                 "view_coords": view_coords,
             }
         )

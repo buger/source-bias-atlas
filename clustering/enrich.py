@@ -57,42 +57,95 @@ def _detect_raw_column(conn: sqlite3.Connection) -> str:
     return "raw_json" if "raw_json" in cols else "raw"
 
 
+def _row_to_post_dict(row: Tuple) -> Dict:
+    pid, title, url, summary, upvotes, comments, ts, raw = row
+    comments_permalink = None
+    image = None
+    if raw:
+        try:
+            rj = json.loads(raw)
+            comments_permalink = rj.get("commentsPermalink")
+            image = rj.get("image")
+        except (json.JSONDecodeError, TypeError):
+            pass
+    return {
+        "id": pid,
+        "title": (title or "").strip() or None,
+        "url": url,
+        "comments_permalink": comments_permalink,
+        "summary": (summary or "").strip() or None,
+        "image": image,
+        "num_upvotes": int(upvotes or 0),
+        "num_comments": int(comments or 0),
+        "created_at": ts,
+    }
+
+
 def _fetch_recent_posts(conn: sqlite3.Connection, source_id: str, limit: int = 10) -> List[Dict]:
-    """Return up to `limit` recent posts (most recent first) with display fields."""
+    """Return up to `limit` recent posts (most recent first).
+
+    For high-volume sources, the very newest posts often have 0 engagement
+    because daily.dev hasn't had time to accumulate signal. We bias toward
+    posts that are at least 3 days old OR have any engagement; if not enough
+    such posts exist, fall back to truly newest.
+    """
+    raw_col = _detect_raw_column(conn)
+    base_select = (
+        f"SELECT id, title, url, summary, num_upvotes, num_comments, "
+        f"  COALESCE(NULLIF(published_at,''), created_at) AS ts, "
+        f"  {raw_col} AS raw "
+        f"FROM posts WHERE source_id = ?"
+    )
+    # Prefer posts with engagement OR posts that are at least 3 days old.
+    cur = conn.execute(
+        base_select + (
+            " AND ("
+            "    num_upvotes > 0 OR num_comments > 0"
+            "    OR COALESCE(NULLIF(published_at,''), created_at) < datetime('now', '-3 days')"
+            ")"
+            " ORDER BY COALESCE(NULLIF(published_at,''), created_at) DESC LIMIT ?"
+        ),
+        (source_id, limit),
+    )
+    out = [_row_to_post_dict(r) for r in cur.fetchall()]
+    if len(out) >= limit:
+        return out
+    # Fallback: not enough qualifying posts — fill with truly newest.
+    seen = {p["id"] for p in out}
+    cur = conn.execute(
+        base_select + " ORDER BY COALESCE(NULLIF(published_at,''), created_at) DESC LIMIT ?",
+        (source_id, limit * 2),
+    )
+    for r in cur.fetchall():
+        if len(out) >= limit:
+            break
+        d = _row_to_post_dict(r)
+        if d["id"] not in seen:
+            out.append(d)
+            seen.add(d["id"])
+    return out
+
+
+def _fetch_top_posts(conn: sqlite3.Connection, source_id: str, limit: int = 5) -> List[Dict]:
+    """Return up to `limit` highest-engagement posts ever for this source.
+
+    Engagement score = num_upvotes + 5 * num_comments (comments weighted
+    higher because they're rarer signal). Sources where no posts have any
+    engagement return an empty list.
+    """
     raw_col = _detect_raw_column(conn)
     cur = conn.execute(
         f"SELECT id, title, url, summary, num_upvotes, num_comments, "
         f"  COALESCE(NULLIF(published_at,''), created_at) AS ts, "
         f"  {raw_col} AS raw "
         "FROM posts WHERE source_id = ? "
-        "ORDER BY COALESCE(NULLIF(published_at,''), created_at) DESC "
+        "  AND (num_upvotes > 0 OR num_comments > 0) "
+        "ORDER BY (num_upvotes + 5 * num_comments) DESC, "
+        "         num_upvotes DESC "
         "LIMIT ?",
         (source_id, limit),
     )
-    out: List[Dict] = []
-    for row in cur.fetchall():
-        pid, title, url, summary, upvotes, comments, ts, raw = row
-        comments_permalink = None
-        image = None
-        if raw:
-            try:
-                rj = json.loads(raw)
-                comments_permalink = rj.get("commentsPermalink")
-                image = rj.get("image")
-            except (json.JSONDecodeError, TypeError):
-                pass
-        out.append({
-            "id": pid,
-            "title": (title or "").strip() or None,
-            "url": url,
-            "comments_permalink": comments_permalink,
-            "summary": (summary or "").strip() or None,
-            "image": image,
-            "num_upvotes": int(upvotes or 0),
-            "num_comments": int(comments or 0),
-            "created_at": ts,
-        })
-    return out
+    return [_row_to_post_dict(r) for r in cur.fetchall()]
 
 
 def top_tags(posts: List[Dict], limit: int = 8) -> List[Tuple[str, int]]:
@@ -159,7 +212,7 @@ def sample_titles(posts: List[Dict], title_length_avg: float) -> Dict[str, List[
 
 
 def enrich(db_path: str, source_ids: List[str], title_length_avgs: Dict[str, float]):
-    """Return {source_id: {top_tags, sample_titles, recent_posts}}."""
+    """Return {source_id: {top_tags, sample_titles, recent_posts, top_posts}}."""
     conn = sqlite3.connect(db_path)
     out: Dict[str, Dict] = {}
     try:
@@ -171,6 +224,7 @@ def enrich(db_path: str, source_ids: List[str], title_length_avgs: Dict[str, flo
                     posts, title_length_avgs.get(sid, 60.0)
                 ),
                 "recent_posts": _fetch_recent_posts(conn, sid, limit=10),
+                "top_posts": _fetch_top_posts(conn, sid, limit=5),
             }
     finally:
         conn.close()
