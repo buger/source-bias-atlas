@@ -6,14 +6,11 @@ export default function ClusterLegend({
   clusters,
   activeId,
   onSelect,
-  squadCountByCluster,
   publisherCountByCluster,
 }: {
   clusters: Cluster[];
   activeId: number | null;
   onSelect: (id: number | null) => void;
-  /** When provided, "+N squads" is suffixed onto each cluster row. */
-  squadCountByCluster?: Map<number, number>;
   /** When provided, override `cluster.size` (which is publishers + squads from atlas.json). */
   publisherCountByCluster?: Map<number, number>;
 }) {
@@ -36,7 +33,6 @@ export default function ClusterLegend({
         const active = activeId === c.id;
         const dim = activeId != null && !active;
         const pubCount = publisherCountByCluster?.get(c.id) ?? c.size;
-        const squadCount = squadCountByCluster?.get(c.id) ?? 0;
         return (
           <button
             key={c.id}
@@ -71,9 +67,6 @@ export default function ClusterLegend({
             </span>
             <span className="text-xs text-ink-subtle mt-0.5 flex-shrink-0 text-right whitespace-nowrap">
               {pubCount}
-              {squadCount > 0 && (
-                <span className="text-accent/80"> +{squadCount}</span>
-              )}
             </span>
           </button>
         );

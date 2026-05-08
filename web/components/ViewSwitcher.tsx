@@ -1,7 +1,6 @@
 "use client";
 
 import type { AtlasView } from "@/lib/atlas-types";
-import Tooltip from "@/components/Tooltip";
 
 interface Props {
   views: AtlasView[];
@@ -10,39 +9,43 @@ interface Props {
 }
 
 /**
- * Compact view picker. Uses a native <select> for simplicity and
- * accessibility (avoids a custom dropdown). The current view's
- * description is exposed via a small "?" tooltip next to the picker.
+ * Horizontal segmented control. Each view is a pill button; the active
+ * button is filled with the accent. On narrow viewports the row scrolls
+ * horizontally with snap, so buttons keep their natural width instead of
+ * wrapping or getting squished.
  */
 export default function ViewSwitcher({ views, value, onChange }: Props) {
-  const current = views.find((v) => v.id === value);
   return (
-    <div className="inline-flex items-center gap-2 text-sm text-ink-muted">
-      <label htmlFor="atlas-view-select" className="select-none text-ink-subtle">
-        View
-      </label>
-      <select
-        id="atlas-view-select"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="bg-bg-elevated border border-line rounded-md px-2.5 h-9 text-sm text-ink hover:border-line/100 focus:border-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 cursor-pointer transition-colors duration-150"
-      >
-        {views.map((v) => (
-          <option key={v.id} value={v.id} title={v.description}>
-            {v.label}
-          </option>
-        ))}
-      </select>
-      {current && (
-        <Tooltip content={current.description} placement="bottom">
-          <span
-            aria-label="View description"
-            className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-line text-[10px] text-ink-subtle cursor-help hover:text-ink hover:border-accent transition-colors duration-150"
+    <div
+      role="radiogroup"
+      aria-label="Atlas view"
+      className="flex items-center gap-1.5 overflow-x-auto snap-x snap-mandatory -mx-1 px-1 max-w-full
+                 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    >
+      {views.map((v) => {
+        const active = v.id === value;
+        return (
+          <button
+            key={v.id}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            title={v.description}
+            onClick={() => onChange(v.id)}
+            className={[
+              "snap-start flex-shrink-0 inline-flex items-center justify-center",
+              "h-9 px-3 rounded-md text-sm whitespace-nowrap",
+              "border transition-all duration-150",
+              "focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40",
+              active
+                ? "bg-accent border-accent text-white shadow-sm"
+                : "bg-bg-elevated border-line text-ink-muted hover:text-ink hover:border-accent/70 hover:-translate-y-px",
+            ].join(" ")}
           >
-            ?
-          </span>
-        </Tooltip>
-      )}
+            {v.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
