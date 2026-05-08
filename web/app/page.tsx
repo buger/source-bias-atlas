@@ -12,7 +12,6 @@ import type {
 import { loadSummary } from "@/lib/atlas-data";
 import ClusterLegend from "@/components/ClusterLegend";
 import SearchBox from "@/components/SearchBox";
-import SquadToggle from "@/components/SquadToggle";
 import ViewSwitcher from "@/components/ViewSwitcher";
 import WelcomeCard, { welcomeWasDismissed } from "@/components/WelcomeCard";
 import HelpButton from "@/components/HelpButton";
@@ -21,6 +20,10 @@ import QuadrantGuide, {
   markQuadrantGuideSeen,
 } from "@/components/QuadrantGuide";
 import QuadrantGuideButton from "@/components/QuadrantGuideButton";
+import UmapGuide, {
+  umapGuideWasSeen,
+  markUmapGuideSeen,
+} from "@/components/UmapGuide";
 
 const AtlasMap = dynamic(() => import("@/components/AtlasMap"), { ssr: false });
 
@@ -93,7 +96,6 @@ function HomePageInner() {
   const [error, setError] = useState<string | null>(null);
   const [activeClusterId, setActiveClusterId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
-  const [showSquads, setShowSquads] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   // Welcome card visibility. Initialized after mount from localStorage.
   const [welcomeOpen, setWelcomeOpen] = useState(false);
@@ -101,6 +103,8 @@ function HomePageInner() {
   // Quadrant guide modal state. Tracks the view it's currently showing for.
   const [guideOpen, setGuideOpen] = useState(false);
   const [guideViewId, setGuideViewId] = useState<string | null>(null);
+  // UMAP / auto-view guide modal state.
+  const [umapGuideOpen, setUmapGuideOpen] = useState(false);
 
   // Active atlas view id, persisted in the URL (?view=...).
   const views: AtlasView[] = useMemo(() => data?.views ?? [], [data]);
@@ -166,6 +170,18 @@ function HomePageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [viewId, hasQuadrantGuide, welcomeOpen]);
 
+  // Auto-open the UMAP guide on the "auto" view, when not seen and welcome closed.
+  useEffect(() => {
+    if (viewId !== "auto") {
+      if (umapGuideOpen) setUmapGuideOpen(false);
+      return;
+    }
+    if (welcomeOpen) return;
+    if (umapGuideWasSeen()) return;
+    setUmapGuideOpen(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewId, welcomeOpen]);
+
   // "?" key re-opens the welcome card.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -184,29 +200,20 @@ function HomePageInner() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // The Atlas is a publisher map; squads are filtered out at the source list
+  // stage, so AtlasMap and downstream code never sees them.
   const visibleSources = useMemo(() => {
     if (!data) return [];
-    return data.sources.filter((s) => showSquads || !s.is_squad);
-  }, [data, showSquads]);
+    return data.sources.filter((s) => !s.is_squad);
+  }, [data]);
 
-  // Per-cluster publisher / squad counts. Driven from the raw atlas data so
-  // the legend doesn't shift when the search box filters down `visibleSources`.
+  // Per-cluster publisher counts. Driven from the raw atlas data so the
+  // legend doesn't shift when the search box filters down `visibleSources`.
   const publisherCountByCluster = useMemo(() => {
     const m = new Map<number, number>();
     if (!data) return m;
     for (const s of data.sources) {
       if (s.is_squad) continue;
-      m.set(s.cluster_id, (m.get(s.cluster_id) ?? 0) + 1);
-    }
-    return m;
-  }, [data]);
-
-  const squadCountByCluster = useMemo(() => {
-    const m = new Map<number, number>();
-    if (!data) return m;
-    for (const s of data.sources) {
-      if (!s.is_squad) continue;
-      if (!Number.isFinite(s.x) || !Number.isFinite(s.y)) continue;
       m.set(s.cluster_id, (m.get(s.cluster_id) ?? 0) + 1);
     }
     return m;
@@ -253,7 +260,6 @@ function HomePageInner() {
             activeId={activeClusterId}
             onSelect={setActiveClusterId}
             publisherCountByCluster={publisherCountByCluster}
-            squadCountByCluster={showSquads ? squadCountByCluster : undefined}
           />
           <AxesPanel
             meta={data.layout_meta}
@@ -267,11 +273,13 @@ function HomePageInner() {
       )}
       <div className="flex-1 min-w-0 flex flex-col">
         <div className="flex flex-wrap items-center gap-3 p-3 border-b border-line bg-bg-elevated/50">
-          <div className="flex-1 min-w-[160px] max-w-md">
+          <div className="w-full sm:w-auto sm:flex-1 min-w-[160px] sm:max-w-xs">
             <SearchBox value={search} onChange={setSearch} />
           </div>
           {views.length > 0 && (
-            <ViewSwitcher views={views} value={viewId} onChange={setViewId} />
+            <div className="w-full sm:w-auto sm:flex-1 min-w-0">
+              <ViewSwitcher views={views} value={viewId} onChange={setViewId} />
+            </div>
           )}
           <QuadrantGuideButton
             visible={hasQuadrantGuide}
@@ -280,8 +288,10 @@ function HomePageInner() {
               setGuideOpen(true);
             }}
           />
-
-          <SquadToggle enabled={showSquads} onChange={setShowSquads} />
+          <QuadrantGuideButton
+            visible={viewId === "auto"}
+            onClick={() => setUmapGuideOpen(true)}
+          />
           <span className="text-xs text-ink-subtle ml-auto">
             {highlightHandles ? `${highlightHandles.size} match` : `${visibleSources.length} sources`}
           </span>
@@ -328,6 +338,18 @@ function HomePageInner() {
               markQuadrantGuideSeen(guideViewId);
             }
             setGuideOpen(false);
+          }}
+        />
+        <UmapGuide
+          open={umapGuideOpen}
+          views={views}
+          onClose={({ remember } = {}) => {
+            if (remember) markUmapGuideSeen();
+            setUmapGuideOpen(false);
+          }}
+          onSwitchView={(id) => {
+            setUmapGuideOpen(false);
+            setViewId(id);
           }}
         />
       </div>
