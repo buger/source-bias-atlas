@@ -689,16 +689,10 @@ export default function AtlasMap({
             />
           );
         }
-        if (layoutMeta) {
-          return (
-            <AxisLabels
-              x_pos={layoutMeta.x_axis.positive}
-              x_neg={layoutMeta.x_axis.negative}
-              y_pos={layoutMeta.y_axis.positive}
-              y_neg={layoutMeta.y_axis.negative}
-            />
-          );
-        }
+        // For the UMAP/auto view we deliberately omit canvas-edge axis labels:
+        // UMAP coordinates are not a real x/y axis (re-running rotates the whole
+        // layout). Showing labels misleads users into reading them as features.
+        // The sidebar AxesPanel explains the loose correlations honestly.
         return null;
       })()}
       <Legend hasSquads={squads.length > 0} />

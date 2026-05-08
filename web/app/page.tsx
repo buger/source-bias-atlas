@@ -358,7 +358,8 @@ function AxesPanel({
     );
   }
 
-  // Auto / UMAP view: original feature-correlation read-out.
+  // Auto / UMAP view: this is NOT a feature-axis view — it's a 2D embedding.
+  // Position has no canonical meaning; clusters and proximity carry the signal.
   if (!meta) return null;
   const xTop = meta.x_axis.top_correlated_features.slice(0, 2);
   const yTop = meta.y_axis.top_correlated_features.slice(0, 2);
@@ -369,24 +370,39 @@ function AxesPanel({
   return (
     <div className="mt-6 text-xs text-ink-subtle leading-relaxed">
       <div className="uppercase tracking-wide text-ink-muted mb-2">
-        What the axes mean
+        How this layout works
       </div>
-      {view?.description && (
-        <div className="text-[11px] text-ink-subtle/90 mb-3">
-          {view.description}
-        </div>
-      )}
-      <div className="mb-2">
-        <div className="text-ink-muted">
-          ← {meta.x_axis.negative} / {meta.x_axis.positive} →
-        </div>
-        <div className="text-[10px] text-ink-subtle/80">{fmtPair(xTop)}</div>
+      <div className="text-[11px] text-ink-subtle/90 mb-3">
+        UMAP places <em>similar sources</em> near each other. The axes are
+        not real coordinates — re-running UMAP could rotate the whole map and
+        the result would be equally valid. <strong>Clusters and neighborhoods
+        carry the signal, not x or y values.</strong>
       </div>
-      <div>
-        <div className="text-ink-muted">
-          ↓ {meta.y_axis.negative} / {meta.y_axis.positive} ↑
+      <div className="text-[11px] text-ink-subtle/90 mb-3">
+        For sharp axes you can read literally,{" "}
+        <span className="text-ink-muted">switch to a feature view</span>{" "}
+        (Engagement × Discussion, Volume × Depth, etc.).
+      </div>
+      <div className="mt-3 border-t border-line pt-3">
+        <div className="uppercase tracking-wide text-ink-muted/80 mb-2 text-[10px]">
+          Loose correlations
         </div>
-        <div className="text-[10px] text-ink-subtle/80">{fmtPair(yTop)}</div>
+        <div className="text-[10px] text-ink-subtle/70 mb-2 italic">
+          Strongest features that drift along each direction. Weak signal —
+          UMAP is non-linear.
+        </div>
+        <div className="mb-2">
+          <div className="text-ink-muted">
+            ← {meta.x_axis.negative} / {meta.x_axis.positive} →
+          </div>
+          <div className="text-[10px] text-ink-subtle/70">{fmtPair(xTop)}</div>
+        </div>
+        <div>
+          <div className="text-ink-muted">
+            ↓ {meta.y_axis.negative} / {meta.y_axis.positive} ↑
+          </div>
+          <div className="text-[10px] text-ink-subtle/70">{fmtPair(yTop)}</div>
+        </div>
       </div>
     </div>
   );
