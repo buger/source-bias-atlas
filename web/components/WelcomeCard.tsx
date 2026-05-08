@@ -83,12 +83,14 @@ export default function WelcomeCard({ layoutMeta, open, onClose }: Props) {
         aria-labelledby="welcome-title"
         className={[
           "pointer-events-auto",
-          "w-[340px] max-w-[calc(100vw-2rem)]",
-          "rounded-lg border border-line bg-bg-elevated/95 backdrop-blur",
-          "shadow-2xl",
-          "p-4",
-          "transition-all duration-200 ease-out",
-          closing || !entered ? "opacity-0 translate-y-2" : "opacity-100 translate-y-0",
+          "w-[360px] max-w-[calc(100vw-2rem)]",
+          "rounded-xl border border-line bg-bg-elevated/95 backdrop-blur",
+          "shadow-[0_20px_60px_-12px_rgba(0,0,0,0.6),0_0_0_1px_rgba(255,91,31,0.08)]",
+          "p-5",
+          "transition-all duration-300 ease-out",
+          closing || !entered
+            ? "opacity-0 translate-y-3 scale-[0.98]"
+            : "opacity-100 translate-y-0 scale-100",
         ].join(" ")}
       >
         <div className="flex items-start justify-between gap-3 mb-2">
@@ -137,16 +139,16 @@ export default function WelcomeCard({ layoutMeta, open, onClose }: Props) {
           </div>
         )}
 
-        <div className="flex items-center justify-between mt-3 pt-3 border-t border-line">
+        <div className="flex items-center justify-between mt-4 pt-4 border-t border-line">
           <Link
             href="/about"
-            className="text-[12px] text-ink-subtle hover:text-accent transition"
+            className="text-[12px] text-ink-subtle hover:text-accent transition-colors duration-150"
           >
             Read more →
           </Link>
           <button
             onClick={handleClose}
-            className="px-3 py-1.5 rounded-md bg-accent text-bg text-[12px] font-medium hover:opacity-90 transition"
+            className="px-4 py-2 rounded-md bg-accent text-bg text-[12.5px] font-semibold hover:bg-accent/90 hover:shadow-[0_4px_16px_-2px_rgba(255,91,31,0.4)] focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/50 focus-visible:ring-offset-2 focus-visible:ring-offset-bg-elevated transition-all duration-150"
           >
             Got it
           </button>

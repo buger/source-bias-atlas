@@ -25,7 +25,7 @@ export default function ViewSwitcher({ views, value, onChange }: Props) {
         id="atlas-view-select"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="bg-bg-elevated border border-line rounded-md px-2 py-1.5 text-sm text-ink focus:border-accent focus:outline-none cursor-pointer"
+        className="bg-bg-elevated border border-line rounded-md px-2.5 h-9 text-sm text-ink hover:border-line/100 focus:border-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 cursor-pointer transition-colors duration-150"
       >
         {views.map((v) => (
           <option key={v.id} value={v.id} title={v.description}>
@@ -37,7 +37,7 @@ export default function ViewSwitcher({ views, value, onChange }: Props) {
         <Tooltip content={current.description} placement="bottom">
           <span
             aria-label="View description"
-            className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-line text-[10px] text-ink-subtle cursor-help"
+            className="inline-flex items-center justify-center w-4 h-4 rounded-full border border-line text-[10px] text-ink-subtle cursor-help hover:text-ink hover:border-accent transition-colors duration-150"
           >
             ?
           </span>

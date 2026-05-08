@@ -17,7 +17,7 @@ export default function QuadrantGuideButton({ onClick, visible }: Props) {
       onClick={onClick}
       aria-label="Open quadrant guide"
       title="Open quadrant guide"
-      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-line bg-bg-elevated text-sm text-ink-muted hover:text-ink hover:border-accent transition"
+      className="inline-flex items-center gap-1.5 px-2.5 h-9 rounded-md border border-line bg-bg-elevated text-sm text-ink-muted hover:text-ink hover:border-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 transition-colors duration-150"
     >
       <span
         aria-hidden

@@ -29,9 +29,60 @@ export default function HomePage() {
   // static prerender. Keep the boundary at the page entry so the rest of the
   // component tree remains unaffected.
   return (
-    <Suspense fallback={<div className="p-8 text-ink-muted">Loading atlas…</div>}>
+    <Suspense fallback={<AtlasSkeleton />}>
       <HomePageInner />
     </Suspense>
+  );
+}
+
+function AtlasSkeleton() {
+  return (
+    <div className="flex flex-col md:flex-row h-[calc(100vh-57px)]">
+      <aside className="hidden md:block w-64 flex-shrink-0 border-r border-line bg-bg-elevated p-4">
+        <div className="h-3 w-20 bg-line/60 rounded mb-3 animate-pulse" />
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="flex items-center gap-2 mb-2">
+            <div
+              className="w-3 h-3 rounded-full bg-line/60 animate-pulse"
+              style={{ animationDelay: `${i * 80}ms` }}
+            />
+            <div
+              className="h-3 flex-1 rounded bg-line/40 animate-pulse"
+              style={{ animationDelay: `${i * 80}ms` }}
+            />
+          </div>
+        ))}
+      </aside>
+      <div className="flex-1 relative overflow-hidden">
+        <div className="absolute inset-0">
+          {/* faint scattered dots placeholder */}
+          {Array.from({ length: 60 }).map((_, i) => {
+            const x = (i * 137) % 100;
+            const y = (i * 79) % 100;
+            const size = 4 + (i % 5);
+            return (
+              <span
+                key={i}
+                className="absolute rounded-full bg-line/50 animate-pulse"
+                style={{
+                  left: `${x}%`,
+                  top: `${y}%`,
+                  width: size,
+                  height: size,
+                  animationDelay: `${(i % 8) * 120}ms`,
+                }}
+              />
+            );
+          })}
+        </div>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-ink-subtle text-sm flex items-center gap-2">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-accent animate-ping" />
+            <span>Loading atlas…</span>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -186,7 +237,7 @@ function HomePageInner() {
   }
 
   if (!data) {
-    return <div className="p-8 text-ink-muted">Loading atlas…</div>;
+    return <AtlasSkeleton />;
   }
 
   const onSourceClick = (s: SourceSummary) => {

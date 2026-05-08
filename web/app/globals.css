@@ -10,10 +10,19 @@ html, body {
   background: #0b0d12;
   color: #e6e8ec;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.55;
+  text-rendering: optimizeLegibility;
+}
+
+/* Headings inherit a tighter line-height for hierarchy. */
+h1, h2, h3, h4 {
+  line-height: 1.2;
 }
 
 ::selection {
@@ -23,4 +32,43 @@ body {
 /* deck.gl tooltip baseline (we restyle in component) */
 .deck-tooltip {
   pointer-events: none;
+}
+
+/* Subtle scrollbars for dark theme. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #262b36 transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: #262b36;
+  border-radius: 4px;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: #3a4150;
+}
+
+/* Visible focus ring on keyboard nav (Tailwind already adds focus-visible:ring,
+   this is a sane default for any element we forgot). */
+:focus-visible {
+  outline: 2px solid rgba(255, 91, 31, 0.5);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Reduce-motion respect: tone down our pulse / ping animations. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

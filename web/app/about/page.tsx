@@ -242,15 +242,61 @@ export default function AboutPage() {
         </ul>
       </Section>
 
+      <Section title="Built with">
+        <ul className="list-disc pl-5 text-ink-muted text-sm space-y-1">
+          <li>Next.js 14 (static export, no runtime API routes)</li>
+          <li>deck.gl for the WebGL scatter map</li>
+          <li>Recharts for the per-source feature radar</li>
+          <li>Tailwind for the dark UI</li>
+          <li>Python: scikit-learn (K-means), umap-learn (2D layout), pandas</li>
+          <li>daily.dev&apos;s public source feed API for the underlying data</li>
+        </ul>
+      </Section>
+
+      <Section title="Sibling project">
+        <p>
+          <a
+            href="https://buger.github.io/source-originality-score/"
+            className="text-accent hover:underline"
+          >
+            Source Originality Score →
+          </a>{" "}
+          asks the sharper question: when N daily.dev sources cover the same story,{" "}
+          <em>who got there first?</em> Same hackathon, same data ethos, different lens.
+        </p>
+      </Section>
+
+      <Section title="What's next / known limits">
+        <ul className="list-disc pl-5 text-ink-muted text-sm space-y-1">
+          <li>
+            Feature definitions are heuristic, not LLM-derived. Easy to argue with — that&apos;s the
+            point.
+          </li>
+          <li>
+            Cluster labels are auto-generated from dominant features; some are sharper than others.
+          </li>
+          <li>UMAP is non-linear: re-running may rotate the layout. Distances and clusters are stable; absolute axes are not.</li>
+          <li>Engagement is post-level. We can&apos;t see who upvoted or why.</li>
+        </ul>
+      </Section>
+
       <Section title="Built for">
         <p>
           The daily.dev 72-hour Public API hackathon, 2026. No auth, no backend — the entire site
           is a static export driven by a small set of pre-built JSON artifacts.
         </p>
-        <p className="mt-3 text-sm text-ink-muted">
+        <p className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
           <Link href="/" className="text-accent hover:underline">
             ← Back to the atlas
           </Link>
+          <a
+            href="https://github.com/buger/source-bias-atlas"
+            target="_blank"
+            rel="noreferrer"
+            className="text-ink-muted hover:text-ink"
+          >
+            Source code on GitHub →
+          </a>
         </p>
       </Section>
     </div>
