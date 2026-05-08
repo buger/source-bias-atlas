@@ -802,6 +802,7 @@ def write_split_outputs(atlas: Dict, public_dir: str) -> Dict[str, int]:
             "top_tags": src.get("top_tags", []),
             "sample_titles": src.get("sample_titles", {"representative": [], "outlier": []}),
             "recent_posts": src.get("recent_posts", []),
+            "top_posts": src.get("top_posts", []),
             "similar_handles": nearest,
             "opposite_handles": farthest,
             "similar": similar_resolved,
