@@ -1,0 +1,49 @@
+{
+  "method": "umap",
+  "n_points": 1361,
+  "random_state": 42,
+  "x_axis": {
+    "positive": "ignored content",
+    "negative": "single-topic dominant",
+    "top_correlated_features": [
+      [
+        "top_tag_share",
+        -0.568
+      ],
+      [
+        "zero_engagement_share",
+        0.55
+      ],
+      [
+        "title_length_var",
+        0.503
+      ],
+      [
+        "title_length_avg",
+        0.494
+      ]
+    ]
+  },
+  "y_axis": {
+    "positive": "shows authors",
+    "negative": "deep / long-read",
+    "top_correlated_features": [
+      [
+        "author_present_share",
+        0.596
+      ],
+      [
+        "zero_engagement_share",
+        -0.574
+      ],
+      [
+        "median_upvotes",
+        0.548
+      ],
+      [
+        "avg_read_time",
+        -0.378
+      ]
+    ]
+  }
+}
