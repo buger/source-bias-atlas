@@ -1,6 +1,6 @@
 # Atlas self-check
 
-- generated_at: `2026-05-08T10:42:12Z`
+- generated_at: `2026-05-24T14:59:55Z`
 - total sources: **1361**
 - publishers: **1307**
 - squads (off-grid): **54**
